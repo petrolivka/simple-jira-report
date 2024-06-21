@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            function filterEpic() {
+                // Get the input field and its value
+                var input = document.getElementById("epicFilter");
+                var filter = input.value.toUpperCase();
+
+                // Get the table rows
+                var rows = document.querySelectorAll(".issue-row");
+
+                // Loop through all table rows
+                for (var i = 0; i < rows.length; i++) {
+                    // Get the epic summary cell
+                    var cell = rows[i].querySelector(".epic-summary-cell");
+                    if (cell) {
+                        var txtValue = cell.textContent || cell.innerText;
+                        // If the cell text doesn't match the filter, hide the row
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            rows[i].style.display = "";
+                        } else {
+                            rows[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+        </script>
+        <title>Sprint Report</title>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            montserrat: ["Montserrat"],
+                        },
+                    },
+                },
+            };
+        </script>
+        <style type="text/tailwindcss">
+            @tailwind base;
+            @tailwind components;
+            @tailwind utilities;
+        </style>
+    </head>
+    {% set sprint_status_bg, sprint_status_text = sprint_status_color(sprint.status) %}
+    <body class="font-montserrat bg-gray-100">
+        <div class="container mx-auto py-8">
+            <h1 class="text-4xl font-semibold mb-4">{{ sprint.name }}</h1>
+            <h2 class="text-2xl font-semibold">
+                Status:
+                <span
+                    class="text-base font-bold rounded-md p-1 uppercase {{ sprint_status_bg }} {{ sprint_status_text }}"
+                    >{{ sprint.status }}</span
+                >
+            </h2>
+            <h2 class="text-xl font-semibold">
+                Duration: {{ sprint.start.strftime('%d.%m.%Y') }} - {{ sprint.end.strftime('%d.%m.%Y') }}
+            </h2>
+
+            <div class="flex flex-row mt-8 gap-x-4">
+                <div class="bg-white p-4 rounded-md shadow-lg basis-2/12">
+                    <div><span class="bg-gray-300 text-gray-800 uppercase font-bold p-1 rounded-md">To Do</span></div>
+                    <div class="font-bold text-4xl mt-2 text-gray-800">{{ todo_count }}</div>
+                </div>
+                <div class="bg-white p-4 rounded-md shadow-lg basis-2/12">
+                    <div>
+                        <span class="bg-blue-300 text-blue-800 uppercase font-bold p-1 rounded-md">In progress</span>
+                    </div>
+                    <div class="font-bold text-4xl mt-2 text-blue-800">{{ inprogress_count }}</div>
+                </div>
+                <div class="bg-white p-4 rounded-md shadow-lg basis-2/12">
+                    <div><span class="bg-green-300 text-green-800 uppercase font-bold p-1 rounded-md">Done</span></div>
+                    <div class="font-bold text-4xl mt-2 text-green-800">{{ done_count }}</div>
+                </div>
+            </div>
+            <div class="mt-8">
+                <input type="text" id="epicFilter" class="rounded-md p-4 w-80 shadow-lg" onkeyup="filterEpic()" placeholder="Filter by epic summary...">
+            </div>
+            <div class="mt-8 bg-white rounded-md p-2">
+                <div class="flex flex-row p-2 font-semibold gap-x-1">
+                    <div class="basis-1/12">Key</div>
+                    <div class="basis-4/12">Summary</div>
+                    <div class="basis-1/12">Epic Key</div>
+                    <div class="basis-3/12">Epic Summary</div>
+                    <div class="basis-2/12">Status</div>
+                    <div class="basis-1/12">Created</div>
+                </div>
+                {% for issue in issues %} {% set issue_status_bg, issue_status_text = issue_status_color(issue.status)
+                %} {% set issue_status_lb = issue_status_label(issue.status) %}
+                <div class="flex flex-row p-2 gap-y-2 gap-x-1 issue-row">
+                    <div class="basis-1/12">
+                        <span class="font-semibold no-underline hover:underline"
+                            ><a href="{{ jira_url }}/browse/{{ issue.key }}">{{ issue.key }}</a></span
+                        >
+                    </div>
+                    <div class="basis-4/12 truncate">{{ issue.summary }}</div>
+                    <div class="basis-1/12">
+                        {% if issue.parent %}<a
+                            href="epic?key={{ issue.parent.key }}"
+                            class="no-underline hover:underline"
+                            >{{ issue.parent.key }}</a
+                        >{% else %} None {% endif %}
+                    </div>
+                    <div class="basis-3/12 truncate epic-summary-cell">
+                        {% if issue.parent %}<span class="truncate text-xs {{ issue.parent.color }} p-1 rounded-md"
+                            >{{ issue.parent.summary }}</span
+                        >{% else %} - {% endif %}
+                    </div>
+                    <div class="basis-2/12">
+                        <span
+                            class="text-base font-bold {{ issue_status_bg }} {{ issue_status_text }} rounded-md p-1 uppercase"
+                            >{{ issue_status_lb }}</span
+                        >
+                    </div>
+                    <div class="basis-1/12">{{ issue.created.strftime('%d.%m.%Y') }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </body>
+</html>

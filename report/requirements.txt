@@ -1,0 +1,5 @@
+requests
+aws-lambda-powertools[all]
+atlassian-python-api
+Jinja2
+pydantic

@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  labs-sprint-report
+
+  Sample SAM Template for labs-sprint-report
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+
+Resources:
+  MyAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: auth
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Timeout: 5
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          MY_USERNAME: provide_here
+          MY_PASSWORD: provide_here
+  SprintReportFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: report
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          JIRA_USER: provide_here
+          JIRA_PASSWORD: provide_here
+          JIRA_URL: provide_here
+          JIRA_BOARD_ID: 14
+      Events:
+        SprintReport:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /sprint-report
+            Method: get
+            RestApiId: !Ref ApiGateway
+            Auth:
+              Authorizer: ApiGatewayAuthorizer
+        EpicDetail:
+          Type: Api
+          Properties:
+            Path: /epic
+            Method: get
+            RestApiId: !Ref ApiGateway
+            Auth:
+              Authorizer: ApiGatewayAuthorizer
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: WebAppApi
+      StageName: dev
+      Auth:
+        DefaultAuthorizer: ApiGatewayAuthorizer
+        Authorizers:
+          ApiGatewayAuthorizer:
+            FunctionArn: !GetAtt MyAuthorizerFunction.Arn
+
